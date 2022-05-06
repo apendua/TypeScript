@@ -1835,9 +1835,15 @@ namespace ts {
                 const pos = getNodePos();
                 // Store original token kind if it is not just an Identifier so we can report appropriate error later in type checker
                 const originalKeywordKind = token();
-                const text = internIdentifier(scanner.getTokenValue());
+                const tokenValue = scanner.getTokenValue();
+                const match = /^([^_]+)__(\d+)$/.exec(tokenValue);
+                const text = internIdentifier(match ? match[1] : tokenValue);
                 nextTokenWithoutCheck();
-                return finishNode(factory.createIdentifier(text, /*typeArguments*/ undefined, originalKeywordKind), pos);
+                const node = factory.createIdentifier(text, /*typeArguments*/ undefined, originalKeywordKind);
+                if (match) {
+                    node.isJsStyleOverload = true;
+                }
+                return finishNode(node, pos, match ? scanner.getStartPos() - match[2].length - 2 : undefined);
             }
 
             if (token() === SyntaxKind.PrivateIdentifier) {
@@ -6636,7 +6642,16 @@ namespace ts {
             const type = parseReturnType(SyntaxKind.ColonToken, /*isType*/ false);
             const body = parseFunctionBlockOrSemicolon(isGenerator | isAsync, Diagnostics.or_expected);
             setAwaitContext(savedAwaitContext);
-            const node = factory.createFunctionDeclaration(decorators, modifiers, asteriskToken, name, typeParameters, parameters, type, body);
+            const node = factory.createFunctionDeclaration(
+                decorators,
+                modifiers,
+                asteriskToken,
+                name,
+                typeParameters,
+                parameters,
+                type,
+                name?.isJsStyleOverload ? undefined : body,
+            );
             return withJSDoc(finishNode(node, pos), hasJSDoc);
         }
 
@@ -6694,7 +6709,7 @@ namespace ts {
                 typeParameters,
                 parameters,
                 type,
-                body
+                name.kind === SyntaxKind.Identifier && name.isJsStyleOverload ? undefined : body,
             );
             // An exclamation token on a method is invalid syntax and will be handled by the grammar checker
             node.exclamationToken = exclamationToken;
