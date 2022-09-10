@@ -8204,6 +8204,9 @@ namespace ts {
                         case "callback":
                             tag = parseCallbackTag(start, tagName, margin, indentText);
                             break;
+                        case "name":
+                            tag = parseNameTag(start, tagName, margin, indentText);
+                            break;
                         case "see":
                             tag = parseSeeTag(start, tagName, margin, indentText);
                             break;
@@ -8706,6 +8709,16 @@ namespace ts {
                     }
                     const end = comment !== undefined ? getNodePos() : typeExpression.end;
                     return finishNode(factory.createJSDocCallbackTag(tagName, typeExpression, fullName, comment), start, end);
+                }
+
+                function parseNameTag(start: number, tagName: Identifier, indent: number, indentText: string): JSDocNameTag {
+                    const fullName = parseJSDocTypeNameWithNamespace();
+                    skipWhitespace();
+                    let comment = parseTagComments(indent);
+                    if (!comment) {
+                        comment = parseTrailingTagComments(start, getNodePos(), indent, indentText);
+                    }
+                    return finishNode(factory.createJSDocNameTag(tagName, fullName, comment), start);
                 }
 
                 function escapedTextsEqual(a: EntityName, b: EntityName): boolean {

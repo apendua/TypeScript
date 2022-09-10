@@ -874,6 +874,10 @@ namespace ts {
         return node.kind === SyntaxKind.JSDocCallbackTag;
     }
 
+    export function isJSDocNameTag(node: Node): node is JSDocNameTag {
+        return node.kind === SyntaxKind.JSDocNameTag;
+    }
+
     export function isJSDocPublicTag(node: Node): node is JSDocPublicTag {
         return node.kind === SyntaxKind.JSDocPublicTag;
     }

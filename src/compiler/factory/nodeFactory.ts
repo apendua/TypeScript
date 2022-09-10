@@ -349,6 +349,8 @@ namespace ts {
             updateJSDocPropertyTag,
             createJSDocCallbackTag,
             updateJSDocCallbackTag,
+            createJSDocNameTag,
+            updateJSDocNameTag,
             createJSDocAugmentsTag,
             updateJSDocAugmentsTag,
             createJSDocImplementsTag,
@@ -4607,6 +4609,23 @@ namespace ts {
                 ? update(createJSDocCallbackTag(tagName, typeExpression, fullName, comment), node)
                 : node;
         }
+
+        function createJSDocNameTag(tagName: Identifier | undefined, fullName?: Identifier | JSDocNamespaceDeclaration, comment?: string | NodeArray<JSDocComment>): JSDocNameTag {
+            const node = createBaseJSDocTag<JSDocNameTag>(SyntaxKind.JSDocNameTag, tagName ?? createIdentifier("name"), comment);
+            node.fullName = fullName;
+            node.name = getJSDocTypeAliasName(fullName);
+            return node;
+        }
+
+        // @api
+        function updateJSDocNameTag(node: JSDocNameTag, tagName: Identifier = getDefaultTagName(node), fullName: Identifier | JSDocNamespaceDeclaration | undefined, comment: string | NodeArray<JSDocComment> | undefined): JSDocNameTag {
+            return node.tagName !== tagName
+                || node.fullName !== fullName
+                || node.comment !== comment
+                ? update(createJSDocNameTag(tagName, fullName, comment), node)
+                : node;
+        }
+
 
         // @api
         function createJSDocAugmentsTag(tagName: Identifier | undefined, className: JSDocAugmentsTag["class"], comment?: string | NodeArray<JSDocComment>): JSDocAugmentsTag {

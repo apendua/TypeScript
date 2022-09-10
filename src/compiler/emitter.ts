@@ -1655,6 +1655,8 @@ namespace ts {
                         return;
                     case SyntaxKind.JSDocCallbackTag:
                         return emitJSDocCallbackTag(node as JSDocCallbackTag);
+                    case SyntaxKind.JSDocNameTag:
+                        return emitJSDocNameTag(node as JSDocNameTag);
                     // SyntaxKind.JSDocEnumTag (see below)
                     case SyntaxKind.JSDocParameterTag:
                     case SyntaxKind.JSDocPropertyTag:
@@ -3649,13 +3651,13 @@ namespace ts {
 
         function hasTrailingCommentsAtPosition(pos: number) {
             let result = false;
-            forEachTrailingCommentRange(currentSourceFile?.text || "", pos + 1, () => result = true);
+            forEachTrailingCommentRange(currentSourceFile?.text || "", pos + 1, undefined, () => result = true);
             return result;
         }
 
         function hasLeadingCommentsAtPosition(pos: number) {
             let result = false;
-            forEachLeadingCommentRange(currentSourceFile?.text || "", pos + 1, () => result = true);
+            forEachLeadingCommentRange(currentSourceFile?.text || "", pos + 1, undefined, () => result = true);
             return result;
         }
 
@@ -3898,6 +3900,15 @@ namespace ts {
             }
             emitJSDocComment(tag.comment);
             emitJSDocSignature(tag.typeExpression);
+        }
+
+        function emitJSDocNameTag(tag: JSDocNameTag) {
+            emitJSDocTagName(tag.tagName);
+            if (tag.name) {
+                writeSpace();
+                emit(tag.name);
+            }
+            emitJSDocComment(tag.comment);
         }
 
         function emitJSDocSimpleTag(tag: JSDocTag) {
@@ -5433,7 +5444,7 @@ namespace ts {
                 // Emit leading comments if the position is not synthesized and the node
                 // has not opted out from emitting leading comments.
                 if (!skipLeadingComments) {
-                    emitLeadingComments(pos, /*isEmittedNode*/ node.kind !== SyntaxKind.NotEmittedStatement);
+                    emitLeadingComments(pos, end, /*isEmittedNode*/ node.kind !== SyntaxKind.NotEmittedStatement);
                 }
 
                 if (!skipLeadingComments || (pos >= 0 && (emitFlags & EmitFlags.NoLeadingComments) !== 0)) {
@@ -5532,7 +5543,7 @@ namespace ts {
 
             enterComment();
             if (!skipTrailingComments) {
-                emitLeadingComments(detachedRange.end, /*isEmittedNode*/ true);
+                emitLeadingComments(detachedRange.end, undefined, /*isEmittedNode*/ true);
                 if (hasWrittenComment && !writer.isAtStartOfLine()) {
                     writer.writeLine();
                 }
@@ -5565,15 +5576,15 @@ namespace ts {
             return prevNodeIndex !== undefined && prevNodeIndex > -1 && parentNodeArray!.indexOf(nextNode) === prevNodeIndex + 1;
         }
 
-        function emitLeadingComments(pos: number, isEmittedNode: boolean) {
+        function emitLeadingComments(pos: number, end: number | undefined, isEmittedNode: boolean) {
             hasWrittenComment = false;
 
             if (isEmittedNode) {
                 if (pos === 0 && currentSourceFile?.isDeclarationFile) {
-                    forEachLeadingCommentToEmit(pos, emitNonTripleSlashLeadingComment);
+                    forEachLeadingCommentToEmit(pos, end, emitNonTripleSlashLeadingComment);
                 }
                 else {
-                    forEachLeadingCommentToEmit(pos, emitLeadingComment);
+                    forEachLeadingCommentToEmit(pos, end, emitLeadingComment);
                 }
             }
             else if (pos === 0) {
@@ -5585,7 +5596,7 @@ namespace ts {
                 //      /// <reference-path ...>
                 //      interface F {}
                 //  The first /// will NOT be removed while the second one will be removed even though both node will not be emitted
-                forEachLeadingCommentToEmit(pos, emitTripleSlashLeadingComment);
+                forEachLeadingCommentToEmit(pos, end, emitTripleSlashLeadingComment);
             }
         }
 
@@ -5633,7 +5644,7 @@ namespace ts {
                 return;
             }
 
-            emitLeadingComments(pos, /*isEmittedNode*/ true);
+            emitLeadingComments(pos, undefined, /*isEmittedNode*/ true);
         }
 
         function emitTrailingComments(pos: number) {
@@ -5694,14 +5705,14 @@ namespace ts {
             }
         }
 
-        function forEachLeadingCommentToEmit(pos: number, cb: (commentPos: number, commentEnd: number, kind: SyntaxKind, hasTrailingNewLine: boolean, rangePos: number) => void) {
+        function forEachLeadingCommentToEmit(pos: number, end: number | undefined, cb: (commentPos: number, commentEnd: number, kind: SyntaxKind, hasTrailingNewLine: boolean, rangePos: number) => void) {
             // Emit the leading comments only if the container's pos doesn't match because the container should take care of emitting these comments
             if (currentSourceFile && (containerPos === -1 || pos !== containerPos)) {
                 if (hasDetachedComments(pos)) {
                     forEachLeadingCommentWithoutDetachedComments(cb);
                 }
                 else {
-                    forEachLeadingCommentRange(currentSourceFile.text, pos, cb, /*state*/ pos);
+                    forEachLeadingCommentRange(currentSourceFile.text, pos, end, cb, /*state*/ pos);
                 }
             }
         }
@@ -5709,7 +5720,7 @@ namespace ts {
         function forEachTrailingCommentToEmit(end: number, cb: (commentPos: number, commentEnd: number, kind: SyntaxKind, hasTrailingNewLine: boolean) => void) {
             // Emit the trailing comments only if the container's end doesn't match because the container should take care of emitting these comments
             if (currentSourceFile && (containerEnd === -1 || (end !== containerEnd && end !== declarationListContainerEnd))) {
-                forEachTrailingCommentRange(currentSourceFile.text, end, cb);
+                forEachTrailingCommentRange(currentSourceFile.text, end, undefined, cb);
             }
         }
 
@@ -5728,7 +5739,7 @@ namespace ts {
                 detachedCommentsInfo = undefined;
             }
 
-            forEachLeadingCommentRange(currentSourceFile.text, pos, cb, /*state*/ pos);
+            forEachLeadingCommentRange(currentSourceFile!.text, pos, undefined, cb, /*state*/ pos);
         }
 
         function emitDetachedCommentsAndUpdateCommentsInfo(range: TextRange) {
