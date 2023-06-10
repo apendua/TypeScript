@@ -1,0 +1,39 @@
+=== tests/cases/compiler/jsDocCallbackTagNestedParam.js ===
+/**
+ * @template T
+ * @callback Iterator
+ * @param {object} item
+ * @param {T} item.value
+ * @param {number} item.index
+ * @returns {void}
+ */
+
+/**
+ * @template T
+ * @param {T[]} array
+ * @param {Iterator<T>} callback
+ * @returns {void}
+ */
+function forEach(array, callback) {
+>forEach : Symbol(forEach, Decl(jsDocCallbackTagNestedParam.js, 0, 0))
+>array : Symbol(array, Decl(jsDocCallbackTagNestedParam.js, 15, 17))
+>callback : Symbol(callback, Decl(jsDocCallbackTagNestedParam.js, 15, 23))
+
+    for (let i = 0; i < array.length; i += 1) {
+>i : Symbol(i, Decl(jsDocCallbackTagNestedParam.js, 16, 12))
+>i : Symbol(i, Decl(jsDocCallbackTagNestedParam.js, 16, 12))
+>array.length : Symbol(Array.length, Decl(lib.es5.d.ts, --, --))
+>array : Symbol(array, Decl(jsDocCallbackTagNestedParam.js, 15, 17))
+>length : Symbol(Array.length, Decl(lib.es5.d.ts, --, --))
+>i : Symbol(i, Decl(jsDocCallbackTagNestedParam.js, 16, 12))
+
+        callback({ value: array[i], index: i });
+>callback : Symbol(callback, Decl(jsDocCallbackTagNestedParam.js, 15, 23))
+>value : Symbol(value, Decl(jsDocCallbackTagNestedParam.js, 17, 18))
+>array : Symbol(array, Decl(jsDocCallbackTagNestedParam.js, 15, 17))
+>i : Symbol(i, Decl(jsDocCallbackTagNestedParam.js, 16, 12))
+>index : Symbol(index, Decl(jsDocCallbackTagNestedParam.js, 17, 35))
+>i : Symbol(i, Decl(jsDocCallbackTagNestedParam.js, 16, 12))
+    }
+}
+

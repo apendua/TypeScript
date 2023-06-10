@@ -1,0 +1,46 @@
+=== tests/cases/compiler/jsDocCallbackTagNestedParam.js ===
+/**
+ * @template T
+ * @callback Iterator
+ * @param {object} item
+ * @param {T} item.value
+ * @param {number} item.index
+ * @returns {void}
+ */
+
+/**
+ * @template T
+ * @param {T[]} array
+ * @param {Iterator<T>} callback
+ * @returns {void}
+ */
+function forEach(array, callback) {
+>forEach : <T>(array: T[], callback: Iterator<T>) => void
+>array : T[]
+>callback : Iterator<T>
+
+    for (let i = 0; i < array.length; i += 1) {
+>i : number
+>0 : 0
+>i < array.length : boolean
+>i : number
+>array.length : number
+>array : T[]
+>length : number
+>i += 1 : number
+>i : number
+>1 : 1
+
+        callback({ value: array[i], index: i });
+>callback({ value: array[i], index: i }) : void
+>callback : Iterator<T>
+>{ value: array[i], index: i } : { value: T; index: number; }
+>value : T
+>array[i] : T
+>array : T[]
+>i : number
+>index : number
+>i : number
+    }
+}
+
