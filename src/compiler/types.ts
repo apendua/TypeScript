@@ -1051,7 +1051,8 @@ export type ForEachChildNodes =
     | JSDocOverrideTag
     | JSDocSatisfiesTag
     | JSDocOverloadTag
-    | JSDocImportTag;
+    | JSDocImportTag
+    | JSDocSpecializeTag;
 
 /** @internal */
 export type HasChildren =
@@ -1237,6 +1238,7 @@ export type HasJSDoc =
     | MethodDeclaration
     | MethodSignature
     | ModuleDeclaration
+    | NewExpression
     | NamedTupleMember
     | NamespaceExportDeclaration
     | ObjectLiteralExpression
@@ -1251,6 +1253,7 @@ export type HasJSDoc =
     | ShorthandPropertyAssignment
     | SpreadAssignment
     | SwitchStatement
+    | TaggedTemplateExpression
     | ThrowStatement
     | TryStatement
     | TypeAliasDeclaration
@@ -3103,14 +3106,14 @@ export interface ExpressionWithTypeArguments extends MemberExpression, NodeWithT
     readonly expression: LeftHandSideExpression;
 }
 
-export interface NewExpression extends PrimaryExpression, Declaration {
+export interface NewExpression extends PrimaryExpression, Declaration, JSDocContainer {
     readonly kind: SyntaxKind.NewExpression;
     readonly expression: LeftHandSideExpression;
     readonly typeArguments?: NodeArray<TypeNode>;
     readonly arguments?: NodeArray<Expression>;
 }
 
-export interface TaggedTemplateExpression extends MemberExpression {
+export interface TaggedTemplateExpression extends MemberExpression, JSDocContainer {
     readonly kind: SyntaxKind.TaggedTemplateExpression;
     readonly tag: LeftHandSideExpression;
     readonly typeArguments?: NodeArray<TypeNode>;

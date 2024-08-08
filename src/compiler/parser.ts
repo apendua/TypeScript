@@ -1134,6 +1134,9 @@ const forEachChildTable: ForEachChildTable = {
     [SyntaxKind.JSDocDeprecatedTag]: forEachChildInJSDocTag,
     [SyntaxKind.JSDocOverrideTag]: forEachChildInJSDocTag,
     [SyntaxKind.JSDocImportTag]: forEachChildInJSDocImportTag,
+    [SyntaxKind.JSDocSpecializeTag]: function forEachChildInJSDocSpecializeTag<T>(node: JSDocSpecializeTag, cbNode: (node: Node) => T | undefined, _cbNodes?: (nodes: NodeArray<Node>) => T | undefined): T | undefined {
+        return forEach(node.typeArguments, cbNode);
+    },
     [SyntaxKind.PartiallyEmittedExpression]: forEachChildInPartiallyEmittedExpression,
 };
 
@@ -6488,7 +6491,7 @@ namespace Parser {
             (tagExpression as Mutable<Node>).flags |= NodeFlags.OptionalChain;
         }
         tagExpression.questionDotToken = questionDotToken;
-        return finishNode(tagExpression, pos);
+        return withJSDoc(finishNode(tagExpression, pos), /*hasJSDoc*/ true);
     }
 
     function parseCallExpressionRest(pos: number, expression: LeftHandSideExpression): LeftHandSideExpression {
@@ -6792,7 +6795,7 @@ namespace Parser {
             parseErrorAtCurrentToken(Diagnostics.Invalid_optional_chain_from_new_expression_Did_you_mean_to_call_0, getTextOfNodeFromSourceText(sourceText, expression));
         }
         const argumentList = token() === SyntaxKind.OpenParenToken ? parseArgumentList() : undefined;
-        return finishNode(factoryCreateNewExpression(expression, typeArguments, argumentList), pos);
+        return withJSDoc(finishNode(factoryCreateNewExpression(expression, typeArguments, argumentList), pos), /*hasJSDoc*/ true);
     }
 
     // STATEMENTS
@@ -9521,17 +9524,18 @@ namespace Parser {
                 if (some(tags, isJSDocSpecializeTag)) {
                     parseErrorAt(tagName.pos, scanner.getTokenStart(), Diagnostics._0_tag_already_specified, unescapeLeadingUnderscores(tagName.escapedText));
                 }
-                const usedBrace = parseOptional(SyntaxKind.OpenBraceToken);
                 const pos = getNodePos();
                 scanner.setSkipJsDocLeadingAsterisks(true);
-                const typeArguments = parseBracketedList(ParsingContext.TypeArguments, parseType, SyntaxKind.LessThanToken, SyntaxKind.GreaterThanToken)
+                let typeArguments: NodeArray<TypeNode>;
+                if (token() === SyntaxKind.LessThanToken) {
+                    typeArguments = parseBracketedList(ParsingContext.TypeArguments, parseJSDocType, SyntaxKind.LessThanToken, SyntaxKind.GreaterThanToken);
+                } else {
+                    typeArguments = parseBracketedList(ParsingContext.TypeArguments, parseJSDocType, SyntaxKind.OpenBraceToken, SyntaxKind.CloseBraceToken);
+                }
                 scanner.setSkipJsDocLeadingAsterisks(false);
                 const node = factory.createJSDocSpecializeTag(tagName, typeArguments);
                 // const comments = margin !== undefined && indentText !== undefined ? parseTrailingTagComments(start, getNodePos(), margin, indentText) : undefined;
                 const res = finishNode(node, pos);
-                if (usedBrace) {
-                    parseExpected(SyntaxKind.CloseBraceToken);
-                }
                 return res;
             }
 

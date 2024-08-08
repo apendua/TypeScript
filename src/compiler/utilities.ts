@@ -304,6 +304,7 @@ import {
     isJSDocReturnTag,
     isJSDocSatisfiesTag,
     isJSDocSignature,
+    isJSDocSpecializeTag,
     isJSDocTag,
     isJSDocTemplateTag,
     isJSDocTypeExpression,
@@ -4434,6 +4435,7 @@ export function canHaveJSDoc(node: Node): node is HasJSDoc {
         case SyntaxKind.MethodDeclaration:
         case SyntaxKind.MethodSignature:
         case SyntaxKind.ModuleDeclaration:
+        case SyntaxKind.NewExpression:
         case SyntaxKind.NamedTupleMember:
         case SyntaxKind.NamespaceExportDeclaration:
         case SyntaxKind.ObjectLiteralExpression:
@@ -4449,6 +4451,7 @@ export function canHaveJSDoc(node: Node): node is HasJSDoc {
         case SyntaxKind.ShorthandPropertyAssignment:
         case SyntaxKind.SpreadAssignment:
         case SyntaxKind.SwitchStatement:
+        case SyntaxKind.TaggedTemplateExpression:
         case SyntaxKind.ThrowStatement:
         case SyntaxKind.TryStatement:
         case SyntaxKind.TypeAliasDeclaration:
@@ -4530,7 +4533,7 @@ function filterOwnedJSDocTags(hostNode: Node, comments: JSDocArray) {
  * a ParenthesizedExpression belongs only to the ParenthesizedExpression.
  */
 function ownsJSDocTag(hostNode: Node, tag: JSDocTag) {
-    return !(isJSDocTypeTag(tag) || isJSDocSatisfiesTag(tag))
+    return !(isJSDocTypeTag(tag) || isJSDocSatisfiesTag(tag) || isJSDocSpecializeTag(tag))
         || !tag.parent
         || !isJSDoc(tag.parent)
         || !isParenthesizedExpression(tag.parent.parent)

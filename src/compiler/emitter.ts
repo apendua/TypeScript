@@ -172,7 +172,6 @@ import {
     getTypeNode,
     guessIndentation,
     HasLocals,
-    hasJSDocNodes,
     hasRecordedExternalHelpers,
     HeritageClause,
     Identifier,
@@ -4505,15 +4504,7 @@ export function createPrinter(printerOptions: PrinterOptions = {}, handlers: Pri
     }
 
     function emitTypeArguments(parentNode: Node, typeArguments: NodeArray<TypeNode> | undefined) {
-        if (isInJSFile(parentNode) && hasJSDocNodes(parentNode)) {
-            for (const tag of getJSDocTags(parentNode)) {
-                if (isJSDocSpecializeTag(tag)) {
-                    emitList(parentNode, tag.typeArguments, ListFormat.TypeArguments, typeArgumentParenthesizerRuleSelector);
-                }
-            }
-        } else {
-            emitList(parentNode, typeArguments, ListFormat.TypeArguments, typeArgumentParenthesizerRuleSelector);
-        }
+        emitList(parentNode, typeArguments, ListFormat.TypeArguments, typeArgumentParenthesizerRuleSelector);
     }
 
     function emitTypeParameters(parentNode: SignatureDeclaration | InterfaceDeclaration | TypeAliasDeclaration | ClassDeclaration | ClassExpression, typeParameters: NodeArray<TypeParameterDeclaration> | undefined) {

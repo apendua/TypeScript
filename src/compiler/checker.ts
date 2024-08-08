@@ -34641,7 +34641,6 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         return isCallOrNewExpression(node) || isTaggedTemplateExpression(node) || isJsxOpeningLikeElement(node);
     }
 
-    // CHECK
     function resolveUntypedCall(node: CallLikeExpression): Signature {
         if (callLikeExpressionMayHaveTypeArguments(node)) {
             // Check type arguments even though we will give an error that untyped calls may not accept type arguments.
