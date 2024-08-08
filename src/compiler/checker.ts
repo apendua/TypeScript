@@ -1119,6 +1119,7 @@ import {
     WideningContext,
     WithStatement,
     YieldExpression,
+    isJSDocSpecializeTag,
 } from "./_namespaces/ts.js";
 import * as moduleSpecifiers from "./_namespaces/ts.moduleSpecifiers.js";
 import * as performance from "./_namespaces/ts.performance.js";
@@ -34640,6 +34641,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         return isCallOrNewExpression(node) || isTaggedTemplateExpression(node) || isJsxOpeningLikeElement(node);
     }
 
+    // CHECK
     function resolveUntypedCall(node: CallLikeExpression): Signature {
         if (callLikeExpressionMayHaveTypeArguments(node)) {
             // Check type arguments even though we will give an error that untyped calls may not accept type arguments.
@@ -35605,6 +35607,14 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
 
         if (!isDecorator && !isInstanceof && !isSuperCall(node)) {
             typeArguments = (node as CallExpression).typeArguments;
+
+            if (!typeArguments && isInJSFile(node)) {
+                for (const tag of getJSDocTags(node)) {
+                    if (isJSDocSpecializeTag(tag)) {
+                        typeArguments = tag.typeArguments;
+                    }
+                }
+            }
 
             // We already perform checking on the type arguments on the class declaration itself.
             if (isTaggedTemplate || isJsxOpeningOrSelfClosingElement || (node as CallExpression).expression.kind !== SyntaxKind.SuperKeyword) {

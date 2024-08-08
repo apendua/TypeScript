@@ -4394,6 +4394,7 @@ export function canHaveJSDoc(node: Node): node is HasJSDoc {
         case SyntaxKind.BinaryExpression:
         case SyntaxKind.Block:
         case SyntaxKind.BreakStatement:
+        case SyntaxKind.CallExpression:
         case SyntaxKind.CallSignature:
         case SyntaxKind.CaseClause:
         case SyntaxKind.ClassDeclaration:

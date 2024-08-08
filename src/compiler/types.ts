@@ -439,6 +439,7 @@ export const enum SyntaxKind {
     JSDocThrowsTag,
     JSDocSatisfiesTag,
     JSDocImportTag,
+    JSDocSpecializeTag,
 
     // Synthesized list
     SyntaxList,
@@ -1198,6 +1199,7 @@ export type HasJSDoc =
     | BinaryExpression
     | Block
     | BreakStatement
+    | CallExpression
     | CallSignatureDeclaration
     | CaseClause
     | ClassLikeDeclaration
@@ -3013,7 +3015,7 @@ export interface SuperElementAccessExpression extends ElementAccessExpression {
 // see: https://tc39.github.io/ecma262/#prod-SuperProperty
 export type SuperProperty = SuperPropertyAccessExpression | SuperElementAccessExpression;
 
-export interface CallExpression extends LeftHandSideExpression, Declaration {
+export interface CallExpression extends LeftHandSideExpression, Declaration, JSDocContainer {
     readonly kind: SyntaxKind.CallExpression;
     readonly expression: LeftHandSideExpression;
     readonly questionDotToken?: QuestionDotToken;
@@ -4116,6 +4118,11 @@ export interface JSDocImportTag extends JSDocTag {
     readonly importClause?: ImportClause;
     readonly moduleSpecifier: Expression;
     readonly attributes?: ImportAttributes;
+}
+
+export interface JSDocSpecializeTag extends JSDocTag {
+    readonly kind: SyntaxKind.JSDocSpecializeTag;
+    readonly typeArguments: NodeArray<TypeNode>;
 }
 
 // NOTE: Ensure this is up-to-date with src/debug/debug.ts
@@ -9050,6 +9057,8 @@ export interface NodeFactory {
     updateJSDocSatisfiesTag(node: JSDocSatisfiesTag, tagName: Identifier | undefined, typeExpression: JSDocTypeExpression, comment: string | NodeArray<JSDocComment> | undefined): JSDocSatisfiesTag;
     createJSDocImportTag(tagName: Identifier | undefined, importClause: ImportClause | undefined, moduleSpecifier: Expression, attributes?: ImportAttributes, comment?: string | NodeArray<JSDocComment>): JSDocImportTag;
     updateJSDocImportTag(node: JSDocImportTag, tagName: Identifier | undefined, importClause: ImportClause | undefined, moduleSpecifier: Expression, attributes: ImportAttributes | undefined, comment: string | NodeArray<JSDocComment> | undefined): JSDocImportTag;
+    createJSDocSpecializeTag(tagName: Identifier | undefined, typeArguments: readonly TypeNode[]): JSDocSpecializeTag;
+    updateJSDocSpecializeTag(node: JSDocSpecializeTag, tagName: Identifier | undefined, typeArguments: readonly TypeNode[]): JSDocSpecializeTag;
     createJSDocText(text: string): JSDocText;
     updateJSDocText(node: JSDocText, text: string): JSDocText;
     createJSDocComment(comment?: string | NodeArray<JSDocComment> | undefined, tags?: readonly JSDocTag[] | undefined): JSDoc;

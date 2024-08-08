@@ -147,7 +147,9 @@ import {
     isImportEqualsDeclaration,
     isJSDocFunctionType,
     isJSDocNullableType,
+    isJSDocParameterTag,
     isJSDocReturnTag,
+    isJSDocSpecializeTag,
     isJSDocTypeTag,
     isJsxNamespacedName,
     isJsxOpeningElement,
@@ -201,6 +203,7 @@ import {
     JSDocSatisfiesTag,
     JSDocSeeTag,
     JSDocSignature,
+    JSDocSpecializeTag,
     JSDocSyntaxKind,
     JSDocTag,
     JSDocTemplateTag,
@@ -6501,6 +6504,7 @@ namespace Parser {
                 }
             }
             if (typeArguments || token() === SyntaxKind.OpenParenToken) {
+                // const hasJSDoc = hasPrecedingJSDocComment();
                 // Absorb type arguments into CallExpression when preceding expression is ExpressionWithTypeArguments
                 if (!questionDotToken && expression.kind === SyntaxKind.ExpressionWithTypeArguments) {
                     typeArguments = (expression as ExpressionWithTypeArguments).typeArguments;
@@ -6510,7 +6514,7 @@ namespace Parser {
                 const callExpr = questionDotToken || tryReparseOptionalChain(expression) ?
                     factoryCreateCallChain(expression, questionDotToken, typeArguments, argumentList) :
                     factoryCreateCallExpression(expression, typeArguments, argumentList);
-                expression = finishNode(callExpr, pos);
+                expression = withJSDoc(finishNode(callExpr, pos), /*hasJSDoc*/ true);
                 continue;
             }
             if (questionDotToken) {
@@ -9122,6 +9126,9 @@ namespace Parser {
                     case "import":
                         tag = parseImportTag(start, tagName, margin, indentText);
                         break;
+                    case "specialize":
+                        tag = parseSpecializeTag(start, tagName, margin, indentText);
+                        break;
                     default:
                         tag = parseUnknownTag(start, tagName, margin, indentText);
                         break;
@@ -9508,6 +9515,24 @@ namespace Parser {
 
                 const comments = margin !== undefined && indentText !== undefined ? parseTrailingTagComments(start, getNodePos(), margin, indentText) : undefined;
                 return finishNode(factory.createJSDocImportTag(tagName, importClause, moduleSpecifier, attributes, comments), start);
+            }
+
+            function parseSpecializeTag(start: number, tagName: Identifier, margin: number, indentText: string): JSDocSpecializeTag {
+                if (some(tags, isJSDocSpecializeTag)) {
+                    parseErrorAt(tagName.pos, scanner.getTokenStart(), Diagnostics._0_tag_already_specified, unescapeLeadingUnderscores(tagName.escapedText));
+                }
+                const usedBrace = parseOptional(SyntaxKind.OpenBraceToken);
+                const pos = getNodePos();
+                scanner.setSkipJsDocLeadingAsterisks(true);
+                const typeArguments = parseBracketedList(ParsingContext.TypeArguments, parseType, SyntaxKind.LessThanToken, SyntaxKind.GreaterThanToken)
+                scanner.setSkipJsDocLeadingAsterisks(false);
+                const node = factory.createJSDocSpecializeTag(tagName, typeArguments);
+                // const comments = margin !== undefined && indentText !== undefined ? parseTrailingTagComments(start, getNodePos(), margin, indentText) : undefined;
+                const res = finishNode(node, pos);
+                if (usedBrace) {
+                    parseExpected(SyntaxKind.CloseBraceToken);
+                }
+                return res;
             }
 
             function parseExpressionWithTypeArgumentsForAugments(): ExpressionWithTypeArguments & { expression: Identifier | PropertyAccessEntityNameExpression; } {

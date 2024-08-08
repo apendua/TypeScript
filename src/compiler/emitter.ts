@@ -136,6 +136,7 @@ import {
     getExternalModuleName,
     getIdentifierTypeArguments,
     getInternalEmitFlags,
+    getJSDocTags,
     getLeadingCommentRanges,
     getLineAndCharacterOfPosition,
     getLinesBetweenPositionAndNextNonWhitespaceCharacter,
@@ -171,6 +172,7 @@ import {
     getTypeNode,
     guessIndentation,
     HasLocals,
+    hasJSDocNodes,
     hasRecordedExternalHelpers,
     HeritageClause,
     Identifier,
@@ -211,7 +213,9 @@ import {
     isImportEqualsDeclaration,
     isIncrementalCompilation,
     isInJsonFile,
+    isInJSFile,
     isJSDocLikeText,
+    isJSDocSpecializeTag,
     isJsonSourceFile,
     isJsxClosingElement,
     isJsxNamespacedName,
@@ -4501,7 +4505,15 @@ export function createPrinter(printerOptions: PrinterOptions = {}, handlers: Pri
     }
 
     function emitTypeArguments(parentNode: Node, typeArguments: NodeArray<TypeNode> | undefined) {
-        emitList(parentNode, typeArguments, ListFormat.TypeArguments, typeArgumentParenthesizerRuleSelector);
+        if (isInJSFile(parentNode) && hasJSDocNodes(parentNode)) {
+            for (const tag of getJSDocTags(parentNode)) {
+                if (isJSDocSpecializeTag(tag)) {
+                    emitList(parentNode, tag.typeArguments, ListFormat.TypeArguments, typeArgumentParenthesizerRuleSelector);
+                }
+            }
+        } else {
+            emitList(parentNode, typeArguments, ListFormat.TypeArguments, typeArgumentParenthesizerRuleSelector);
+        }
     }
 
     function emitTypeParameters(parentNode: SignatureDeclaration | InterfaceDeclaration | TypeAliasDeclaration | ClassDeclaration | ClassExpression, typeParameters: NodeArray<TypeParameterDeclaration> | undefined) {

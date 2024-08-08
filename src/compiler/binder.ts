@@ -238,6 +238,7 @@ import {
     JSDocParameterTag,
     JSDocPropertyLikeTag,
     JSDocSignature,
+    JSDocSpecializeTag,
     JSDocTypedefTag,
     JSDocTypeLiteral,
     JsxAttribute,
@@ -3076,6 +3077,8 @@ function createBinder(): (file: SourceFile, options: CompilerOptions) => void {
                 return bind((node as JSDocOverloadTag).typeExpression);
             case SyntaxKind.JSDocImportTag:
                 return (jsDocImports || (jsDocImports = [])).push(node as JSDocImportTag);
+            case SyntaxKind.JSDocSpecializeTag:
+                return bindEach((node as JSDocSpecializeTag).typeArguments);
         }
     }
 
