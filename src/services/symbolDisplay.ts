@@ -38,6 +38,7 @@ import {
     isCallExpressionTarget,
     isCallOrNewExpression,
     isClassExpression,
+    isClassLike,
     isConstTypeReference,
     isDeprecatedDeclaration,
     isEnumConst,
@@ -62,6 +63,7 @@ import {
     isTypeAliasDeclaration,
     isVarAwaitUsing,
     isVarConst,
+    isVariableDeclaration,
     isVarUsing,
     JSDocTagInfo,
     JsxOpeningLikeElement,
@@ -256,6 +258,14 @@ export interface SymbolDisplayPartsDocumentationAndSymbolKind {
     tags: JSDocTagInfo[] | undefined;
 }
 
+function isFunctionLikeOrFunctionLikeVariableDeclaration(node: Node | undefined): boolean {
+    return isFunctionLike(node) || (!!node && isVariableDeclaration(node) && isFunctionLike(node.initializer));
+}
+
+function isClassOrClassVariableDeclaration(node: Node | undefined): boolean {
+    return !!node && (isClassLike(node) || (isVariableDeclaration(node) && !!node.initializer && isClassLike(node.initializer)));
+}
+
 function getSymbolDisplayPartsDocumentationAndSymbolKindWorker(typeChecker: TypeChecker, symbol: Symbol, sourceFile: SourceFile, enclosingDeclaration: Node | undefined, location: Node, type: Type | undefined, semanticMeaning: SemanticMeaning, alias?: Symbol): SymbolDisplayPartsDocumentationAndSymbolKind {
     const displayParts: SymbolDisplayPart[] = [];
     let documentation: SymbolDisplayPart[] = [];
@@ -316,14 +326,23 @@ function getSymbolDisplayPartsDocumentationAndSymbolKindWorker(typeChecker: Type
         else if (isCallExpressionTarget(location) || isNewExpressionTarget(location)) {
             callExpressionLike = location.parent as CallExpression | NewExpression;
         }
-        else if (location.parent && (isJsxOpeningLikeElement(location.parent) || isTaggedTemplateExpression(location.parent)) && isFunctionLike(symbol.valueDeclaration)) {
-            callExpressionLike = location.parent;
+        else if (location.parent && isJsxOpeningLikeElement(location.parent)) {
+            if (isClassOrClassVariableDeclaration(symbol.valueDeclaration) || isFunctionLikeOrFunctionLikeVariableDeclaration(symbol.valueDeclaration)) {
+                callExpressionLike = location.parent;
+            }
+        }
+        else if (location.parent && isTaggedTemplateExpression(location.parent)) {
+            if (isFunctionLikeOrFunctionLikeVariableDeclaration(symbol.valueDeclaration)) {
+                callExpressionLike = location.parent;
+            }
         }
 
         if (callExpressionLike) {
             signature = typeChecker.getResolvedSignature(callExpressionLike); // TODO: GH#18217
 
-            const useConstructSignatures = callExpressionLike.kind === SyntaxKind.NewExpression || (isCallExpression(callExpressionLike) && callExpressionLike.expression.kind === SyntaxKind.SuperKeyword);
+            const useConstructSignatures = callExpressionLike.kind === SyntaxKind.NewExpression
+                || (isCallExpression(callExpressionLike) && callExpressionLike.expression.kind === SyntaxKind.SuperKeyword)
+                || (isJsxOpeningLikeElement(callExpressionLike) && isClassOrClassVariableDeclaration(symbol.valueDeclaration))
 
             const allSignatures = useConstructSignatures ? type.getConstructSignatures() : type.getCallSignatures();
 
